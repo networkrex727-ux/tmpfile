@@ -1,0 +1,144 @@
+{
+  "entities": {
+    "fileMetadata": {
+      "title": "File Metadata",
+      "description": "Metadata for a temporarily stored file with expiration and access parameters",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the file",
+          "minLength": 4,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "originalName": {
+          "type": "string",
+          "description": "Original file name uploaded by user",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "size": {
+          "type": "number",
+          "description": "Size of the file in bytes"
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "MIME type of the file",
+          "maxLength": 128
+        },
+        "uploadTimestamp": {
+          "type": "number",
+          "description": "Epoch timestamp in milliseconds when uploaded"
+        },
+        "expiresAt": {
+          "type": "number",
+          "description": "Epoch timestamp in milliseconds when file expires"
+        },
+        "expirationPlan": {
+          "type": "string",
+          "description": "Chosen expiration policy",
+          "enum": ["15m", "1h", "6h", "12h", "24h", "3d", "7d", "burn"]
+        },
+        "downloadCount": {
+          "type": "number",
+          "description": "Number of times file has been downloaded"
+        },
+        "maxDownloads": {
+          "type": "number",
+          "description": "Maximum allowed downloads before deletion (0 for unlimited)"
+        },
+        "isBurnAfterReading": {
+          "type": "boolean",
+          "description": "Whether file should be deleted immediately after 1 download"
+        },
+        "isPasswordProtected": {
+          "type": "boolean",
+          "description": "Whether access requires password unlock"
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "Optional SHA-256 hash of password if protected",
+          "maxLength": 128
+        },
+        "deleteToken": {
+          "type": "string",
+          "description": "Secret token to permit uploader to delete the file early",
+          "minLength": 8,
+          "maxLength": 64
+        },
+        "batchId": {
+          "type": "string",
+          "description": "ID of parent batch upload if uploaded as part of multiple files",
+          "maxLength": 64
+        },
+        "isExpired": {
+          "type": "boolean",
+          "description": "Flag marking file as expired and pending cleanup"
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "Relative storage path on server disk or storage",
+          "maxLength": 255
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO format creation timestamp"
+        }
+      },
+      "required": ["id", "originalName", "size", "mimeType", "uploadTimestamp", "expiresAt", "expirationPlan", "downloadCount", "deleteToken"]
+    },
+    "batchMetadata": {
+      "title": "Batch Manifest",
+      "description": "Metadata for a batch collection of files uploaded simultaneously",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the file batch",
+          "minLength": 4,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "totalFiles": {
+          "type": "number",
+          "description": "Total number of files in this batch"
+        },
+        "totalSize": {
+          "type": "number",
+          "description": "Combined byte size of files in this batch"
+        },
+        "expiresAt": {
+          "type": "number",
+          "description": "Expiration timestamp in milliseconds"
+        },
+        "expirationPlan": {
+          "type": "string",
+          "description": "Expiration policy for batch",
+          "enum": ["15m", "1h", "6h", "12h", "24h", "3d", "7d", "burn"]
+        },
+        "deleteToken": {
+          "type": "string",
+          "description": "Batch secret deletion token",
+          "minLength": 8,
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of batch creation"
+        }
+      },
+      "required": ["id", "totalFiles", "totalSize", "expiresAt", "expirationPlan", "deleteToken"]
+    }
+  },
+  "firestore": {
+    "/files/{fileId}": {
+      "schema": "fileMetadata",
+      "description": "Contains metadata and access controls for individual uploaded temporary files"
+    },
+    "/batches/{batchId}": {
+      "schema": "batchMetadata",
+      "description": "Contains manifests for multi-file bundle drops"
+    }
+  }
+}

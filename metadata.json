@@ -1,0 +1,6 @@
+{
+  "name": "TmpDrop - Ephemeral File Sharing & Public Upload API",
+  "description": "Fast, anonymous temporary file hosting. Drop 100+ files of any format with custom expiration presets (1h, 24h, 7d, burn after read) and a clean public cURL/REST API for remote automation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

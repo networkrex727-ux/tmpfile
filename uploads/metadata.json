@@ -1,0 +1,21 @@
+{
+  "files": [
+    {
+      "id": "8895c9b7",
+      "originalName": "test.txt",
+      "size": 24,
+      "mimeType": "text/plain",
+      "uploadTimestamp": 1792170650840,
+      "expiresAt": 1792174250840,
+      "expirationPlan": "1h",
+      "downloadCount": 0,
+      "maxDownloads": 0,
+      "isBurnAfterReading": false,
+      "deleteToken": "del_42b4cf4a7c51a514985059f1",
+      "isExpired": false,
+      "storageFilename": "00596cc84fa864a5d9381075d9e708b6.txt",
+      "createdAt": "2026-10-16T17:10:50.841Z"
+    }
+  ],
+  "batches": []
+}

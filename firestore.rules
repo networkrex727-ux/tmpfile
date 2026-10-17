@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() >= 4 && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidFileMetadata(data) {
+      return data.keys().hasAll(['id', 'originalName', 'size', 'mimeType', 'uploadTimestamp', 'expiresAt', 'expirationPlan', 'downloadCount', 'deleteToken'])
+        && data.keys().hasOnly(['id', 'originalName', 'size', 'mimeType', 'uploadTimestamp', 'expiresAt', 'expirationPlan', 'downloadCount', 'maxDownloads', 'isBurnAfterReading', 'isPasswordProtected', 'passwordHash', 'deleteToken', 'batchId', 'isExpired', 'storagePath', 'createdAt'])
+        && isValidId(data.id)
+        && data.originalName is string && data.originalName.size() >= 1 && data.originalName.size() <= 255
+        && data.size is number && data.size > 0
+        && data.mimeType is string && data.mimeType.size() <= 128
+        && data.uploadTimestamp is number
+        && data.expiresAt is number && data.expiresAt > data.uploadTimestamp
+        && data.expirationPlan in ['15m', '1h', '6h', '12h', '24h', '3d', '7d', 'burn']
+        && data.downloadCount is number && data.downloadCount >= 0
+        && data.deleteToken is string && data.deleteToken.size() >= 8 && data.deleteToken.size() <= 64;
+    }
+
+    function isValidBatchMetadata(data) {
+      return data.keys().hasAll(['id', 'totalFiles', 'totalSize', 'expiresAt', 'expirationPlan', 'deleteToken'])
+        && data.keys().hasOnly(['id', 'totalFiles', 'totalSize', 'expiresAt', 'expirationPlan', 'deleteToken', 'fileIds', 'createdAt'])
+        && isValidId(data.id)
+        && data.totalFiles is number && data.totalFiles >= 1 && data.totalFiles <= 500
+        && data.totalSize is number && data.totalSize >= 0
+        && data.expiresAt is number
+        && data.expirationPlan in ['15m', '1h', '6h', '12h', '24h', '3d', '7d', 'burn']
+        && data.deleteToken is string && data.deleteToken.size() >= 8 && data.deleteToken.size() <= 64;
+    }
+
+    // Individual Files metadata collection
+    match /files/{fileId} {
+      allow get: if isValidId(fileId);
+      allow list: if false;
+
+      allow create: if isValidId(fileId) 
+        && incoming().id == fileId
+        && isValidFileMetadata(incoming());
+
+      allow update: if isValidId(fileId)
+        && incoming().id == existing().id
+        && incoming().originalName == existing().originalName
+        && incoming().size == existing().size
+        && incoming().deleteToken == existing().deleteToken
+        && (
+          (incoming().diff(existing()).affectedKeys().hasOnly(['downloadCount']) 
+            && incoming().downloadCount == existing().downloadCount + 1)
+          ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['isExpired', 'downloadCount'])
+            && incoming().isExpired == true)
+        );
+
+      allow delete: if isValidId(fileId);
+    }
+
+    // Batch Bundles metadata collection
+    match /batches/{batchId} {
+      allow get: if isValidId(batchId);
+      allow list: if false;
+      allow create: if isValidId(batchId)
+        && incoming().id == batchId
+        && isValidBatchMetadata(incoming());
+      allow update: if false;
+      allow delete: if isValidId(batchId);
+    }
+
+    // Healthcheck / Connection test doc
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
